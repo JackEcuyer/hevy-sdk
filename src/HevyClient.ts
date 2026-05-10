@@ -5,7 +5,7 @@ import { APIRequest } from "./api-request.js";
 import { ValidationError } from "./errors.js";
 
 type HevyApiHTTPMethod = "GET" | "POST" | "PUT";
-const apiBaseURL = "https://www.hevyapp.com/api/v1";
+const apiBaseURL = "https://api.hevy.com/v1";
 
 /**
  * Configuration options for initializing a HevyClient instance.
