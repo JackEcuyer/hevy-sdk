@@ -4,5 +4,6 @@
   "tsconfig": "tsconfig.commonjs.json",
   "entryPoints": ["src/index.ts"],
   "disableSources": true,
-  "excludeNotDocumented": true
+  "excludeNotDocumented": true,
+  "readme": "README.md"
 }

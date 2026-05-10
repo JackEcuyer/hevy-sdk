@@ -1,2 +1,2 @@
-export { Workouts } from "./Workouts";
-export { Workout } from "./workout.schema";
+export { Workouts } from "./Workouts.js";
+export * from "./workout.types.js";

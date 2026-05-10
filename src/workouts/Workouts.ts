@@ -1,7 +1,7 @@
-import { HevyClient } from "../HevyClient";
-import { APIRequest } from "../api-request";
-import { ValidationError } from "../errors";
-import { workoutSchema, Workout } from "./workout.schema";
+import { HevyClient } from "../HevyClient.js";
+import { createWorkoutSchema, updateWorkoutSchema } from "./workout.schema.js";
+import { Workout, GetWorkoutsResponse } from "./workout.types.js";
+import { CreateWorkoutRequest, UpdateWorkoutRequest } from "./workout.types.js";
 
 /**
  * The Workouts class is used to interact with the workouts section of the Hevy API.
@@ -24,31 +24,20 @@ export class Workouts {
    * @throws Error if the page or pageSize is invalid.
    * @example
    * ```ts
-   * import { HevyClient } from 'hevy-sdk';
+   * import { HevyClient, HevyClientConfig, GetWorkoutsResponse } from 'hevy-sdk';
    *
-   * const client = new HevyClient('your-api-key');
-   * const workouts = await client.workouts.getWorkouts(1, 10);
+   * const config: HevyClientConfig = { apiKey: 'your-api-key' };
+   * const client: HevyClient = new HevyClient(config);
+   * const workouts: GetWorkoutsResponse = await client.workouts.listWorkouts(1, 10);
    * ```
    */
-  public async getWorkouts(page: number, pageSize: number) {
-    // Validate that page and pageSize are integers greater than 0
-    if (!Number.isInteger(page) || page <= 0) {
-      throw new Error("Page must be a positive integer greater than 0");
-    }
-    if (!Number.isInteger(pageSize) || pageSize <= 0 || pageSize > 10) {
-      throw new Error(
-        "Page size must be a positive integer greater than 0 and no more than 10",
-      );
-    }
-
-    // Use APIRequest helper to send GET request
-    const response = await APIRequest(
-      `https://api.hevy.com/v1/workouts`,
-      "GET",
-      null,
-      this.hevyClient.apiKey,
+  public async listWorkouts(
+    page: number,
+    pageSize: number,
+  ): Promise<GetWorkoutsResponse> {
+    return this.hevyClient.sendRequest<GetWorkoutsResponse>(
+      `/workouts?page=${page}&pageSize=${pageSize}`,
     );
-    return response; // Return the workout response data
   }
 
   /**
@@ -57,22 +46,19 @@ export class Workouts {
    * @throws Error if the API request fails.
    * @example
    * ```ts
-   * import { HevyClient } from 'hevy-sdk';
+   * import { HevyClient, HevyClientConfig } from 'hevy-sdk';
    *
-   * const client = new HevyClient('your-api-key');
-   * const count = await client.workouts.getWorkoutCount();
+   * const config: HevyClientConfig = { apiKey: 'your-api-key' };
+   * const client: HevyClient = new HevyClient(config);
+   * const count: number = await client.workouts.getWorkoutCount();
    * ```
    */
-  public async getWorkoutCount() {
+  public async getWorkoutCount(): Promise<number> {
     // Use APIRequest helper to send GET request
-    const response = await APIRequest(
-      `https://api.hevy.com/v1/workouts/count`,
-      "GET",
-      null,
-      this.hevyClient.apiKey,
-    );
-    // return the number of workouts, in 'workout_count' property
-    return response.workout_count;
+    const response = await this.hevyClient.sendRequest<{
+      workoutCount: number;
+    }>(`/workouts/count`);
+    return response.workoutCount;
   }
 
   /**
@@ -82,13 +68,14 @@ export class Workouts {
    * @throws Error if the workoutID is invalid or missing.
    * @example
    * ```ts
-   * import { HevyClient } from 'hevy-sdk';
+   * import { HevyClient, HevyClientConfig, Workout } from 'hevy-sdk';
    *
-   * const client = new HevyClient('your-api-key');
-   * const workout = await client.workouts.getWorkoutByID("workout-id");
+   * const config: HevyClientConfig = { apiKey: 'your-api-key' };
+   * const client: HevyClient = new HevyClient(config);
+   * const workout: Workout = await client.workouts.getWorkout("workout-id");
    * ```
    */
-  public async getWorkoutByID(workoutID: string) {
+  public async getWorkout(workoutID: string): Promise<Workout> {
     // Remove whitespace from start & end of ID
     workoutID = workoutID.trim();
     // Ensure an ID has been provided
@@ -96,49 +83,67 @@ export class Workouts {
       throw new Error("Workout ID is required");
     }
     // Use APIRequest helper to send GET request
-    const response = await APIRequest(
-      `https://api.hevy.com/v1/workouts/${workoutID}`,
-      "GET",
-      null,
-      this.hevyClient.apiKey,
-    );
-    // return workout data
-    return response;
+    return this.hevyClient.sendRequest<Workout>(`/workouts/${workoutID}`);
   }
 
   /**
    * Creates a new workout.
-   * @param workout - The workout object to create.
+   * @param data - The workout object to create.
    * @returns The newly created workout data.
-   * @throws ValidationError if the provided workout data is invalid.
+   * @throws {@link ValidationError} if the provided workout data is invalid.
    * @example
    * ```ts
-   * import { HevyClient } from 'hevy-sdk';
+   * import { HevyClient, HevyClientConfig, CreateWorkoutRequest, Workout } from 'hevy-sdk';
    *
-   * const client = new HevyClient('your-api-key');
-   * const newWorkout = await workouts.createWorkout(validWorkoutObject);
+   * const config: HevyClientConfig = { apiKey: 'your-api-key' };
+   * const client: HevyClient = new HevyClient(config);
+   * // Construct a valid workout object
+   * const validWorkoutObject: CreateWorkoutRequest = { ... };
+   * const newWorkout: Workout = await client.workouts.createWorkout(validWorkoutObject);
    * ```
    */
-  public async createWorkout(workout: Workout) {
-    // Validate workout data
-    const validationResult = workoutSchema.safeParse(workout);
-
-    // Was data validation successful?
-    if (!validationResult.success) {
-      throw new ValidationError(validationResult.error);
-    }
-
-    const validatedWorkout = validationResult.data;
-
-    // Use APIRequest helper to send POST request
-    const response = await APIRequest(
-      `https://api.hevy.com/v1/workouts`,
+  public async createWorkout(data: CreateWorkoutRequest): Promise<Workout> {
+    return this.hevyClient.sendRequest<Workout>(
+      `/workouts`,
       "POST",
-      // Workout data is wrapped in a 'workout' object
-      { workout: validatedWorkout },
-      this.hevyClient.apiKey,
+      data,
+      createWorkoutSchema,
     );
-    // return newly created workout data
-    return response;
+  }
+
+  /**
+   * Updates an existing workout.
+   * @param workoutID - The unique ID of the workout to update.
+   * @param data - The updated workout data.
+   * @returns The updated workout data.
+   * @throws Error if the workoutID is invalid or missing.
+   * @throws {@link ValidationError} if the provided workout data is invalid.
+   * @example
+   * ```ts
+   * import { HevyClient, HevyClientConfig, UpdateWorkoutRequest, Workout } from 'hevy-sdk';
+   *
+   * const config: HevyClientConfig = { apiKey: 'your-api-key' };
+   * const client: HevyClient = new HevyClient(config);
+   * // Construct a valid update object
+   * const validUpdateObject: UpdateWorkoutRequest = { ... };
+   * const updatedWorkout: Workout = await client.workouts.updateWorkout("workout-id", validUpdateObject);
+   * ```
+   */
+  public async updateWorkout(
+    workoutID: string,
+    data: UpdateWorkoutRequest,
+  ): Promise<Workout> {
+    // Remove whitespace from start & end of ID
+    workoutID = workoutID.trim();
+    // Ensure an ID has been provided
+    if (!workoutID) {
+      throw new Error("Workout ID is required");
+    }
+    return this.hevyClient.sendRequest<Workout>(
+      `/workouts/${workoutID}`,
+      "PUT",
+      data,
+      updateWorkoutSchema,
+    );
   }
 }

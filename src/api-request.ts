@@ -1,21 +1,23 @@
+import { APIError, NetworkError } from "./errors.js";
+
 /*
  * A utility function for making HTTP requests to the API.
  * This function simplifies the process of sending requests by handling common
  * configurations such as setting headers (e.g., API key) and converting data
  * to JSON format.
  */
-export const APIRequest = async (
+export const APIRequest = async <T>(
   url: string,
   method: string = "GET",
-  data: Record<string, unknown> | null = null,
+  data: unknown | null = null,
   apiKey: string,
-) => {
+): Promise<T> => {
   // Setup request configuration
   const config: RequestInit = {
     method,
     headers: {
       accept: "application/json",
-      "API-Key": apiKey, // Add API key to header
+      "API-Key": apiKey,
     },
   };
 
@@ -27,17 +29,19 @@ export const APIRequest = async (
       "application/json";
   }
 
-  // Send request to Hevy API
-  const response = await fetch(url, config);
+  let response: Response;
+  try {
+    response = await fetch(url, config);
+  } catch (err) {
+    // Handle network or fetch errors
+    throw new NetworkError(
+      err instanceof Error ? err.message : "Network error",
+    );
+  }
 
   // Check if the response is successful (status 2xx)
   if (!response.ok) {
-    // Unsuccessful response, handle errors
-
-    // Handle invalid API key (401 Unauthorized)
-    if (response.status === 401) {
-      throw new Error(`API Request failed: Invalid API Key`);
-    }
+    let errorMessage: string;
 
     // Initially parse response as text to cater for certain error messages that are not returned in JSON format
     const responseText = await response.text();
@@ -46,18 +50,17 @@ export const APIRequest = async (
     try {
       const errorJSON = JSON.parse(responseText);
       // Successfully parsed as JSON, error message will be in the "error" property
-      throw new Error(
-        `API Request failed: ${errorJSON.error || response.statusText}`,
-      );
+      errorMessage = errorJSON.error || response.statusText;
     } catch {
       // Failed to parse as JSON, error must be plain response text
-      throw new Error(
-        `API Request failed: ${responseText || response.statusText}`,
-      );
+      errorMessage = responseText || response.statusText;
     }
+
+    // Unsuccessful response, handle errors
+    throw new APIError(errorMessage, response.status);
   }
 
   // Return the parsed JSON response
   const responseData = await response.json();
-  return responseData;
+  return responseData as T;
 };

@@ -1,88 +1,173 @@
-import { ValidationError } from "../src/errors";
-import { HevyClient } from "../src/HevyClient";
-import { Workout } from "../src/workouts";
+import { HevyClient } from "../src/HevyClient.js";
+import { Workouts } from "../src/workouts/Workouts.js";
+import { ValidationError } from "../src/errors.js";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import type {
+  GetWorkoutsResponse,
+  Workout,
+  CreateWorkoutRequest,
+  UpdateWorkoutRequest,
+} from "../src/workouts/workout.types.js";
+import { ZodError } from "zod";
 
-const client = new HevyClient(process.env.HEVY_API_KEY || "");
+describe("Workouts", () => {
+  let client: HevyClient;
+  let workouts: Workouts;
+  let sendRequestSpy: jest.SpiedFunction<HevyClient["sendRequest"]>;
+  beforeEach(() => {
+    client = new HevyClient({ apiKey: "fake-api-key" });
+    sendRequestSpy = jest.spyOn(client, "sendRequest");
+    workouts = new Workouts(client);
+  });
 
-describe("Workouts API Tests", () => {
-  // All tests relating to getWorkouts
-  describe("getWorkouts", () => {
-    it("Should return a list of workouts", async () => {
-      const workouts = await client.workouts.getWorkouts(1, 10);
-      expect(workouts).toBeDefined();
-    });
-    it("Should return invalid page number when trying to list workouts with an invalid page number", async () => {
-      await expect(client.workouts.getWorkouts(0, 10)).rejects.toThrow(
-        "Page must be a positive integer greater than 0",
-      );
-    });
-    it("Should return invalid page size when trying to list workouts with an invalid page size", async () => {
-      await expect(client.workouts.getWorkouts(1, 11)).rejects.toThrow(
-        "Page size must be a positive integer greater than 0 and no more than 10",
+  describe("listWorkouts", () => {
+    it("returns a list of workouts", async () => {
+      const mockResponse: GetWorkoutsResponse = {
+        page: 1,
+        page_count: 1,
+        workouts: [
+          {
+            id: "1",
+            title: "Test",
+            routine_id: "r1",
+            description: "desc",
+            start_time: "",
+            end_time: "",
+            updated_at: "",
+            created_at: "",
+            exercises: [],
+          },
+        ],
+      };
+      sendRequestSpy.mockResolvedValueOnce(mockResponse);
+      const result = await workouts.listWorkouts(1, 10);
+      expect(result).toEqual(mockResponse);
+      expect(sendRequestSpy).toHaveBeenCalledWith(
+        "/workouts?page=1&pageSize=10",
       );
     });
   });
-  // All tests relating to getWorkoutCount
+
   describe("getWorkoutCount", () => {
-    it("Should return total number of workouts on account", async () => {
-      const workoutCount = await client.workouts.getWorkoutCount();
-      expect(typeof workoutCount).toBe("number");
+    it("returns the total number of workouts", async () => {
+      sendRequestSpy.mockResolvedValueOnce({ workoutCount: 7 });
+      const count = await workouts.getWorkoutCount();
+      expect(count).toBe(7);
+      expect(sendRequestSpy).toHaveBeenCalledWith("/workouts/count");
     });
   });
-  // All tests relating to getWorkout
-  describe("getWorkoutByID", () => {
-    it("Should return 'Workout ID is required' when calling getWorkoutByID without providing a workout ID", async () => {
-      await expect(client.workouts.getWorkoutByID("")).rejects.toThrow(
+
+  describe("getWorkout", () => {
+    it("throws if workoutID is empty or whitespace", async () => {
+      await expect(workouts.getWorkout("")).rejects.toThrow(
+        "Workout ID is required",
+      );
+      await expect(workouts.getWorkout("   ")).rejects.toThrow(
         "Workout ID is required",
       );
     });
-    it("Should return 'API Request failed: Workout not found' when trying to retrieve workout with an invalid ID", async () => {
-      await expect(client.workouts.getWorkoutByID("invalidID")).rejects.toThrow(
-        "API Request failed: Workout not found",
-      );
-    });
-    it("Should return workout data for specified valid workout ID", async () => {
-      const workoutData = await client.workouts.getWorkoutByID(
-        process.env.VALID_WORKOUT_ID || "",
-      );
-      expect(workoutData).toBeDefined();
+    it("returns workout data for valid ID", async () => {
+      const workout: Workout = {
+        id: "1",
+        title: "Test",
+        routine_id: "r1",
+        description: "desc",
+        start_time: "",
+        end_time: "",
+        updated_at: "",
+        created_at: "",
+        exercises: [],
+      };
+      sendRequestSpy.mockResolvedValueOnce(workout);
+      const result = await workouts.getWorkout("1");
+      expect(result).toEqual(workout);
+      expect(sendRequestSpy).toHaveBeenCalledWith("/workouts/1");
     });
   });
-  // All tests relating to createWorkout
+
   describe("createWorkout", () => {
-    it("Should return 'title is required' when calling createWorkout without providing a title for the workout", async () => {
-      // any only used for testing purposes (need to parse an invalid object and bypass TypeScript checking)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const workoutData: any = {
-        start_time: new Date(),
-        end_time: new Date(),
+    it("calls sendRequest with correct params", async () => {
+      const data: CreateWorkoutRequest = {
+        title: "New",
+        start_time: "2021-01-01",
+        end_time: "2021-01-01",
         is_private: false,
-        exercises: [
-          {
-            exercise_template_id: "D04AC939",
-            sets: [],
-          },
-        ],
+        exercises: [],
       };
-      await expect(client.workouts.createWorkout(workoutData)).rejects.toThrow(
-        ValidationError,
+      sendRequestSpy.mockResolvedValueOnce({ id: "2" });
+      await workouts.createWorkout(data);
+      expect(sendRequestSpy).toHaveBeenCalledWith(
+        "/workouts",
+        "POST",
+        data,
+        expect.anything(),
       );
     });
-    it("Should create a workout and return newly created workout data", async () => {
-      const workoutData: Workout = {
-        title: "Test SDK Workout",
-        start_time: new Date(),
-        end_time: new Date(),
+  });
+
+  describe("updateWorkout", () => {
+    it("throws if workoutID is empty or whitespace", async () => {
+      await expect(
+        workouts.updateWorkout("", {} as UpdateWorkoutRequest),
+      ).rejects.toThrow("Workout ID is required");
+      await expect(
+        workouts.updateWorkout("   ", {} as UpdateWorkoutRequest),
+      ).rejects.toThrow("Workout ID is required");
+    });
+    it("calls sendRequest with correct params", async () => {
+      const data: UpdateWorkoutRequest = {
+        title: "Updated",
+        start_time: "2021-01-01",
+        end_time: "2021-01-01",
         is_private: false,
+        exercises: [],
+      };
+      sendRequestSpy.mockResolvedValueOnce({ id: "3" });
+      await workouts.updateWorkout("3", data);
+      expect(sendRequestSpy).toHaveBeenCalledWith(
+        "/workouts/3",
+        "PUT",
+        data,
+        expect.anything(),
+      );
+    });
+  });
+
+  describe("integration edge cases", () => {
+    it("throws ValidationError when createWorkout fails validation", async () => {
+      sendRequestSpy.mockRejectedValueOnce(
+        new ValidationError(new ZodError([])),
+      );
+      await expect(
+        workouts.createWorkout({} as CreateWorkoutRequest),
+      ).rejects.toThrow(ValidationError);
+    });
+    it("returns the newly created workout data", async () => {
+      const workoutData: Workout = {
+        id: "4",
+        title: "Test SDK Workout",
+        routine_id: "routine-id",
+        description: "desc",
+        start_time: new Date().toISOString(),
+        end_time: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         exercises: [
           {
+            index: 0,
+            title: "Exercise Title",
+            notes: "",
             exercise_template_id: "D04AC939",
+            supersets_id: null,
             sets: [],
           },
         ],
       };
-      const newWorkout = await client.workouts.createWorkout(workoutData);
-      expect(newWorkout).toBeDefined();
+      sendRequestSpy.mockResolvedValueOnce(workoutData);
+      const newWorkout = await workouts.createWorkout(
+        workoutData as unknown as CreateWorkoutRequest,
+      );
+      expect(newWorkout).toEqual(workoutData);
     });
   });
 });

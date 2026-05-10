@@ -12,20 +12,23 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.js"
     }
   },
   "scripts": {
     "build:cjs": "tsc -p tsconfig.commonjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:esm": "tsc -p tsconfig.json",
     "build": "npm run build:cjs && npm run build:esm",
-    "test": "jest",
+    "test:build": "tsc --project tsconfig.test.json",
+    "test": "npm run test:build && jest",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier . --write",
     "prepare": "husky"
   },
   "lint-staged": {
+    "!docs/**": [],
     "**/*": [
       "npm run format",
       "npm run lint"
@@ -76,6 +79,7 @@
     "dotenv": "^16.5.0",
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jest": "^29.15.2",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "lint-staged": "^15.5.2",
