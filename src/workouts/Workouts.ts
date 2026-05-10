@@ -20,7 +20,7 @@ export class Workouts {
    * Retrieves a list of workouts from the API.
    * @param page - The page number for pagination. Must be a positive integer.
    * @param pageSize - The number of workouts per page. Must be a positive integer and no greater than 10.
-   * @returns A list of workouts.
+   * @returns A promise that resolves to a list of workouts.
    * @throws Error if the page or pageSize is invalid.
    * @example
    * ```ts
@@ -42,7 +42,7 @@ export class Workouts {
 
   /**
    * Retrieves the total number of workouts on the account.
-   * @returns The total workout count.
+   * @returns A promise that resolves to the total workout count.
    * @throws Error if the API request fails.
    * @example
    * ```ts
@@ -64,7 +64,7 @@ export class Workouts {
   /**
    * Retrieves a specific workout by workoutID.
    * @param workoutID - The unique ID of the workout to retrieve.
-   * @returns The workout data for the specified workout ID.
+   * @returns A promise that resolves to the workout data for the specified workout ID.
    * @throws Error if the workoutID is invalid or missing.
    * @example
    * ```ts
@@ -89,7 +89,7 @@ export class Workouts {
   /**
    * Creates a new workout.
    * @param data - The workout object to create.
-   * @returns The newly created workout data.
+   * @returns A promise that resolves to the newly created workout data.
    * @throws {@link ValidationError} if the provided workout data is invalid.
    * @example
    * ```ts
@@ -115,7 +115,7 @@ export class Workouts {
    * Updates an existing workout.
    * @param workoutID - The unique ID of the workout to update.
    * @param data - The updated workout data.
-   * @returns The updated workout data.
+   * @returns A promise that resolves to the updated workout data.
    * @throws Error if the workoutID is invalid or missing.
    * @throws {@link ValidationError} if the provided workout data is invalid.
    * @example

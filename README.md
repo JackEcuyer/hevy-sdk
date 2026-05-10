@@ -2,35 +2,48 @@
 
 A TypeScript SDK for the Hevy API – compatible with Node.js, JavaScript frameworks, and browser environments.
 
-## Getting Started
+## Features
 
-Install the SDK:
+- Fully typed API client for Hevy
+- Supports both ESM and CommonJS
+- Works in Node.js and browser environments
+- Includes helpers for workouts, users, and error handling
+- Built-in Zod validation for workout data
 
-```
+## Installation
+
+```sh
 npm install hevy-sdk
 ```
 
-## Usage Example
+## Usage
 
-The main entry point for the SDK is the `HevyClient` class:
+### Basic Example
 
 ```ts
-import { HevyClient, HevyClientConfig } from "hevy-sdk";
+import { HevyClient, HevyClientConfig, Workout } from "hevy-sdk";
 
 const config: HevyClientConfig = { apiKey: "your-api-key" };
-const client: HevyClient = new HevyClient(config);
+const client = new HevyClient(config);
+
+// Get specific workout info
+const Workout: Workout = await client.workouts.getWorkout("workout-id");
 ```
 
-See the [HevyClient](https://jackecuyer.github.io/hevy-sdk/classes/HevyClient.html) class for all available methods and properties.
+### Error Handling
 
----
+The SDK throws rich error types:
+
+- [NetworkError](https://jackecuyer.github.io/hevy-sdk/classes/NetworkError.html): For network/fetch issues
+- [ValidationError](https://jackecuyer.github.io/hevy-sdk/classes/ValidationError.html): For Zod validation failures
+- [APIError](https://jackecuyer.github.io/hevy-sdk/classes/APIError.html): For errors from Hevy API
 
 ## API Reference
 
 - [HevyClient](https://jackecuyer.github.io/hevy-sdk/classes/HevyClient.html): Main SDK client
 - [Workouts](https://jackecuyer.github.io/hevy-sdk/classes/Workouts.html): Workouts API section
-- [ValidationError](https://jackecuyer.github.io/hevy-sdk/classes/ValidationError.html): Error thrown on validation failure
+- [Users](https://jackecuyer.github.io/hevy-sdk/classes/Users.html): Users API section
 
----
+## License
 
-For more details, see the generated documentation below.
+MIT

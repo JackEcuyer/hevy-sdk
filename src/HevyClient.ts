@@ -1,5 +1,6 @@
 import { ZodSchema } from "zod";
 import { Workouts } from "./workouts/index.js";
+import { Users } from "./users/Users.js";
 import { APIRequest } from "./api-request.js";
 import { ValidationError } from "./errors.js";
 
@@ -11,12 +12,12 @@ const apiBaseURL = "https://www.hevyapp.com/api/v1";
  *
  * @property apiKey - The API key used for authenticating requests to the Hevy API.
  */
-export type HevyClientConfig = {
+export interface HevyClientConfig {
   /**
    * The API key used for authenticating requests to the Hevy API.
    */
   apiKey: string;
-};
+}
 
 /**
  * Entry point for the Hevy SDK.
@@ -40,6 +41,8 @@ export class HevyClient {
   private config: HevyClientConfig;
   /** Exposes the `Workouts` section, which allows users to interact with workout-related functionality in the API. @see {@link Workouts} */
   public readonly workouts: Workouts;
+  /** Exposes the `Users` section, which allows users to interact with user-related functionality in the API. @see {@link Users} */
+  public readonly users: Users;
 
   /**
    * Creates an instance of the HevyClient.
@@ -56,6 +59,7 @@ export class HevyClient {
     this.config = config;
     // Instantiate API section classes, allowing the user to interact with each section through `client.{SectionName}.`
     this.workouts = new Workouts(this);
+    this.users = new Users(this);
   }
 
   /* 
