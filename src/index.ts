@@ -3,3 +3,4 @@ export { HevyClient, HevyClientConfig } from "./HevyClient.js";
 export * from "./workouts/index.js";
 export * from "./errors.js";
 export * from "./users/index.js";
+export * from "./routines/index.js";

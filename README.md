@@ -24,10 +24,10 @@ npm install hevy-sdk
 import { HevyClient, HevyClientConfig, Workout } from "hevy-sdk";
 
 const config: HevyClientConfig = { apiKey: "your-api-key" };
-const client = new HevyClient(config);
+const client: HevyClient = new HevyClient(config);
 
 // Get specific workout info
-const Workout: Workout = await client.workouts.getWorkout("workout-id");
+const workout: Workout = await client.workouts.getWorkout("workout-id");
 ```
 
 ### Error Handling
@@ -43,6 +43,7 @@ The SDK throws rich error types:
 - [HevyClient](https://jackecuyer.github.io/hevy-sdk/classes/HevyClient.html): Main SDK client
 - [Workouts](https://jackecuyer.github.io/hevy-sdk/classes/Workouts.html): Workouts API section
 - [Users](https://jackecuyer.github.io/hevy-sdk/classes/Users.html): Users API section
+- [Routines](https://jackecuyer.github.io/hevy-sdk/classes/Routines.html): Routines API section
 
 ## License
 

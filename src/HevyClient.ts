@@ -1,6 +1,7 @@
 import { ZodSchema } from "zod";
-import { Workouts } from "./workouts/index.js";
+import { Workouts } from "./workouts/Workouts.js";
 import { Users } from "./users/Users.js";
+import { Routines } from "./routines/Routines.js";
 import { APIRequest } from "./api-request.js";
 import { ValidationError } from "./errors.js";
 
@@ -43,7 +44,8 @@ export class HevyClient {
   public readonly workouts: Workouts;
   /** Exposes the `Users` section, which allows users to interact with user-related functionality in the API. @see {@link Users} */
   public readonly users: Users;
-
+  /** Exposes the `Routines` section, which allows users to interact with routine-related functionality in the API. @see {@link Routines} */
+  public readonly routines: Routines;
   /**
    * Creates an instance of the HevyClient.
    * Initializes the client with the provided API key and exposes various API sections (e.g. `workouts`).
@@ -60,6 +62,7 @@ export class HevyClient {
     // Instantiate API section classes, allowing the user to interact with each section through `client.{SectionName}.`
     this.workouts = new Workouts(this);
     this.users = new Users(this);
+    this.routines = new Routines(this);
   }
 
   /* 

@@ -33,6 +33,13 @@ async function main() {
   } catch (err) {
     console.error("Failed to fetch workouts:", err);
   }
+
+  try {
+    const routines = await client.routines.listRoutines(1, 5);
+    console.log("Routines:", routines);
+  } catch (err) {
+    console.error("Failed to fetch routines:", err);
+  }
 }
 
 main();
